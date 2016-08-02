@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=NewTerm
+Exec=gapplication launch org.gnome.newterm
+Icon=utilities-terminal
+Type=Application
+StartupNotify=true
+DBusActivatable=true
+Categories=Categories=GNOME;GTK;System;TerminalEmulator;
+Keywords=terminal;shell;project
