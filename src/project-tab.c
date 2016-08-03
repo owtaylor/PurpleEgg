@@ -218,3 +218,14 @@ project_tab_get_title (ProjectTab *self)
   return self->title;
 }
 
+void
+project_tab_copy (ProjectTab *self)
+{
+  vte_terminal_copy_clipboard (VTE_TERMINAL (self->vte));
+}
+
+void
+project_tab_paste (ProjectTab *self)
+{
+  vte_terminal_paste_clipboard (VTE_TERMINAL (self->vte));
+}

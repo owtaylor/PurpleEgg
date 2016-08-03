@@ -11,6 +11,8 @@ G_DECLARE_FINAL_TYPE (ProjectTab, project_tab, PROJECT, TAB, GtkBox)
 
 ProjectTab *project_tab_new (const char *directory);
 const char *project_tab_get_title (ProjectTab *tab);
+void        project_tab_copy      (ProjectTab *tab);
+void        project_tab_paste     (ProjectTab *tab);
 
 G_END_DECLS
 

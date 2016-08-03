@@ -326,6 +326,7 @@ new_tab (ProjectWindow *self)
   g_signal_connect (tab, "title-changed",
 		    G_CALLBACK (on_title_changed), self);
   update_titles (self);
+  gtk_stack_set_visible_child (self->stack, GTK_WIDGET (tab));
 }
 
 static void
@@ -336,9 +337,35 @@ new_tab_cb (GSimpleAction *action,
   new_tab (user_data);
 }
 
+static void
+copy_cb (GSimpleAction *action,
+         GVariant      *parameter,
+         gpointer       user_data)
+{
+  ProjectWindow *self = user_data;
+
+  GtkWidget *current_tab = gtk_stack_get_visible_child (self->stack);
+  if (current_tab)
+    project_tab_copy (PROJECT_TAB (current_tab));
+}
+
+static void
+paste_cb (GSimpleAction *action,
+          GVariant      *parameter,
+          gpointer       user_data)
+{
+  ProjectWindow *self = user_data;
+
+  GtkWidget *current_tab = gtk_stack_get_visible_child (self->stack);
+  if (current_tab)
+    project_tab_paste (PROJECT_TAB (current_tab));
+}
+
 static const GActionEntry window_actions[] = {
     { "set_active_tab", NULL, "i", "1", set_active_tab_cb },
-    { "new_tab", new_tab_cb, NULL, NULL, NULL }
+    { "new_tab", new_tab_cb, NULL, NULL, NULL },
+    { "copy", copy_cb, NULL, NULL, NULL },
+    { "paste", paste_cb, NULL, NULL, NULL }
   };
 
 static void

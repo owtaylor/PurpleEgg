@@ -320,6 +320,8 @@ static const char *tab8_accels[] = { "<Alt>8", NULL };
 static const char *tab9_accels[] = { "<Alt>9", NULL };
 static const char *tab10_accels[] = { "<Alt>0", NULL };
 static const char *new_tab_accels[] = { "<Control><Shift>t", NULL };
+static const char *copy_accels[] = { "<Control><Shift>c", NULL };
+static const char *paste_accels[] = { "<Control><Shift>v", NULL };
 
 static void
 project_application_init (ProjectApplication *self)
@@ -357,5 +359,10 @@ project_application_init (ProjectApplication *self)
   gtk_application_set_accels_for_action (GTK_APPLICATION (self),
                                          "win.new_tab",
                                          new_tab_accels);
-
+  gtk_application_set_accels_for_action (GTK_APPLICATION (self),
+                                         "win.copy",
+                                         copy_accels);
+  gtk_application_set_accels_for_action (GTK_APPLICATION (self),
+                                         "win.paste",
+                                         paste_accels);
 }
