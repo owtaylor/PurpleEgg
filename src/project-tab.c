@@ -147,7 +147,6 @@ on_current_directory_uri_changed (VteTerminal *vte)
 {
   const char *uri = vte_terminal_get_current_directory_uri (vte);
   g_autoptr(GFile) file = g_file_new_for_uri (uri);
-  g_print("%s\n", g_file_get_path (file));
 }
 
 static void
