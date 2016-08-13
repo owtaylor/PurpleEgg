@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=PurpleEgg
 Exec=gapplication launch org.gnome.PurpleEgg
-Icon=utilities-terminal
+Icon=org.gnome.PurpleEgg
 Type=Application
 StartupNotify=true
 DBusActivatable=true

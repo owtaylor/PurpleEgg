@@ -2,6 +2,14 @@
 
 EXTRA_DIST=
 
+icondir=$(datadir)/icons/hicolor/scalable/apps
+icon_DATA = org.gnome.PurpleEgg.svg
+EXTRA_DIST += icon_DATA
+
+symbolicdir=$(datadir)/icons/hicolor/symbolic/apps
+symbolic_DATA = org.gnome.PurpleEgg-symbolic.svg
+EXTRA_DIST += symbolic_DATA
+
 desktopdir=$(datadir)/applications
 desktop_DATA = org.gnome.PurpleEgg.desktop
 EXTRA_DIST += desktop_DATA
