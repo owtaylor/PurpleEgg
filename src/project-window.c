@@ -13,11 +13,15 @@ struct _ProjectWindow
   char *current_git_branch;
   GFileMonitor *git_head_monitor;
   GFileMonitor *git_refs_monitor;
+  double font_scale;
+  int rows;
+  int columns;
 };
 
 G_DEFINE_TYPE (ProjectWindow, project_window, GTK_TYPE_APPLICATION_WINDOW)
 
 static void new_tab (ProjectWindow *self);
+static void update_window_size (ProjectWindow *self);
 
 enum {
   PROP_0,
@@ -253,6 +257,7 @@ project_window_constructed (GObject *object)
   gtk_label_set_markup (self->title, title);
 
   new_tab (self);
+  update_window_size (self);
 
   GError *error = NULL;
 
@@ -294,6 +299,25 @@ project_window_constructed (GObject *object)
 }
 
 static void
+project_window_size_allocate (GtkWidget     *widget,
+			      GtkAllocation *allocation)
+{
+  ProjectWindow *self = PROJECT_WINDOW (widget);
+
+  GTK_WIDGET_CLASS (project_window_parent_class)->size_allocate (widget, allocation);
+
+  GList *children = gtk_container_get_children (GTK_CONTAINER (self->stack));
+  if (children)
+    {
+      ProjectTab *first_tab = children->data;
+      project_tab_get_size (first_tab, &self->columns, &self->rows);
+      g_list_free (children);
+    }
+
+//  g_print ("cols=%d, rows=%d\n", self->columns, self->rows);
+}
+
+static void
 project_window_class_init (ProjectWindowClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
@@ -302,6 +326,10 @@ project_window_class_init (ProjectWindowClass *klass)
   object_class->get_property = project_window_get_property;
   object_class->set_property = project_window_set_property;
   object_class->constructed = project_window_constructed;
+
+  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
+
+  widget_class->size_allocate = project_window_size_allocate;
 
   properties[PROP_DIRECTORY] =
   	g_param_spec_string ("directory",
@@ -380,6 +408,7 @@ static void
 new_tab (ProjectWindow *self)
 {
   ProjectTab *tab = project_tab_new (self->directory);
+  project_tab_set_font_scale (tab, self->font_scale);
   gtk_widget_show (GTK_WIDGET (tab));
   gtk_container_add (GTK_CONTAINER (self->stack), GTK_WIDGET (tab));
   g_signal_connect (tab, "destroy",
@@ -422,16 +451,74 @@ paste_cb (GSimpleAction *action,
     project_tab_paste (PROJECT_TAB (current_tab));
 }
 
+static void
+update_window_size (ProjectWindow *self)
+{
+  GList *children = gtk_container_get_children (GTK_CONTAINER (self->stack));
+  if (children)
+    {
+      for (GList *l = children; l; l = l->next)
+        project_tab_set_size (l->data, self->columns, self->rows);
+      g_list_free (children);
+
+      GtkRequisition natural_size;
+      GtkRequisition min_size;
+      gtk_widget_get_preferred_size (GTK_WIDGET (self->stack), &min_size, &natural_size);
+      gtk_window_resize (GTK_WINDOW (self), natural_size.width, natural_size.height);
+    }
+}
+
+static void
+update_font_sizes (ProjectWindow *self)
+{
+  GList *children = gtk_container_get_children (GTK_CONTAINER (self->stack));
+  for (GList *l = children; l; l = l->next)
+      project_tab_set_font_scale (l->data, self->font_scale);
+
+  update_window_size (self);
+
+  g_list_free (children);
+
+}
+
+static void
+increase_font_size_cb (GSimpleAction *action,
+                       GVariant      *parameter,
+                       gpointer       user_data)
+{
+  ProjectWindow *self = user_data;
+
+  self->font_scale *= 1.2;
+  update_font_sizes (self);
+}
+
+static void
+decrease_font_size_cb (GSimpleAction *action,
+                       GVariant      *parameter,
+                       gpointer       user_data)
+{
+  ProjectWindow *self = user_data;
+
+  self->font_scale /= 1.2;
+  update_font_sizes (self);
+}
+
 static const GActionEntry window_actions[] = {
     { "set_active_tab", NULL, "i", "1", set_active_tab_cb },
     { "new_tab", new_tab_cb, NULL, NULL, NULL },
     { "copy", copy_cb, NULL, NULL, NULL },
-    { "paste", paste_cb, NULL, NULL, NULL }
+    { "paste", paste_cb, NULL, NULL, NULL },
+    { "increase_font_size", increase_font_size_cb, NULL, NULL, NULL },
+    { "decrease_font_size", decrease_font_size_cb, NULL, NULL, NULL }
   };
 
 static void
 project_window_init (ProjectWindow *self)
 {
+  self->font_scale = 1.0;
+  self->rows = 24;
+  self->columns = 80;
+
   gtk_widget_init_template (GTK_WIDGET (self));
 
   g_action_map_add_action_entries (G_ACTION_MAP (self),

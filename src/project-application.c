@@ -331,6 +331,8 @@ static const char *tab10_accels[] = { "<Alt>0", NULL };
 static const char *new_tab_accels[] = { "<Control><Shift>t", NULL };
 static const char *copy_accels[] = { "<Control><Shift>c", NULL };
 static const char *paste_accels[] = { "<Control><Shift>v", NULL };
+static const char *increase_font_size_accels[] = { "<Control>plus", NULL };
+static const char *decrease_font_size_accels[] = { "<Control>minus", NULL };
 
 static void
 project_application_init (ProjectApplication *self)
@@ -374,4 +376,10 @@ project_application_init (ProjectApplication *self)
   gtk_application_set_accels_for_action (GTK_APPLICATION (self),
                                          "win.paste",
                                          paste_accels);
+  gtk_application_set_accels_for_action (GTK_APPLICATION (self),
+                                         "win.increase_font_size",
+                                         increase_font_size_accels);
+  gtk_application_set_accels_for_action (GTK_APPLICATION (self),
+                                         "win.decrease_font_size",
+                                         decrease_font_size_accels);
 }

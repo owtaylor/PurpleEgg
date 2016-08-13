@@ -4,6 +4,7 @@
 struct _ProjectTab
 {
   GtkBox parent_instance;
+  GtkWidget *scrolled_window;
   GtkWidget *vte;
   char *directory;
   char *title;
@@ -102,6 +103,25 @@ project_tab_constructed (GObject *object)
 }
 
 static void
+project_tab_get_preferred_height (GtkWidget *widget,
+                                  int       *minimum_height,
+                                  int       *natural_height)
+{
+  ProjectTab *self = PROJECT_TAB (widget);
+  gtk_widget_get_preferred_height (self->vte, minimum_height, natural_height);
+}
+
+static void
+project_tab_get_preferred_height_for_width (GtkWidget *widget,
+                                            int        width,
+                                            int       *minimum_height,
+                                            int       *natural_height)
+{
+  ProjectTab *self = PROJECT_TAB (widget);
+  gtk_widget_get_preferred_height (self->vte, minimum_height, natural_height);
+}
+
+static void
 project_tab_class_init (ProjectTabClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
@@ -110,6 +130,10 @@ project_tab_class_init (ProjectTabClass *klass)
   object_class->get_property = project_tab_get_property;
   object_class->set_property = project_tab_set_property;
   object_class->constructed = project_tab_constructed;
+
+  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
+  widget_class->get_preferred_height = project_tab_get_preferred_height;
+  widget_class->get_preferred_height_for_width = project_tab_get_preferred_height_for_width;
 
   signals[TITLE_CHANGED] =
   	g_signal_new ("title-changed",
@@ -186,7 +210,10 @@ GdkRGBA palette[] = {
 static void
 project_tab_init (ProjectTab *self)
 {
-  GtkWidget *scrolled_window = gtk_scrolled_window_new (NULL, NULL);
+  self->scrolled_window = gtk_scrolled_window_new (NULL, NULL);
+  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (self->scrolled_window),
+				  GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+
   self->vte = vte_terminal_new ();
 
   vte_terminal_set_colors(VTE_TERMINAL (self->vte),
@@ -197,11 +224,11 @@ project_tab_init (ProjectTab *self)
 
   self->title = g_strdup ("");
 
-  gtk_container_add (GTK_CONTAINER(self), scrolled_window);
-  gtk_widget_set_hexpand (scrolled_window, TRUE);
-  gtk_widget_set_vexpand (scrolled_window, TRUE);
-  gtk_widget_show (scrolled_window);
-  gtk_container_add (GTK_CONTAINER(scrolled_window), self->vte);
+  gtk_container_add (GTK_CONTAINER(self), self->scrolled_window);
+  gtk_widget_set_hexpand (self->scrolled_window, TRUE);
+  gtk_widget_set_vexpand (self->scrolled_window, TRUE);
+  gtk_widget_show (self->scrolled_window);
+  gtk_container_add (GTK_CONTAINER(self->scrolled_window), self->vte);
   gtk_widget_show (self->vte);
   g_signal_connect (self->vte, "child-exited",
                     G_CALLBACK(on_child_exited), self);
@@ -209,6 +236,32 @@ project_tab_init (ProjectTab *self)
                     G_CALLBACK(on_current_directory_uri_changed), self);
   g_signal_connect (self->vte, "window-title-changed",
                     G_CALLBACK(on_window_title_changed), self);
+}
+
+void
+project_tab_set_font_scale (ProjectTab *self,
+			    double      font_scale)
+{
+  vte_terminal_set_font_scale (VTE_TERMINAL (self->vte), font_scale);
+}
+
+void
+project_tab_get_size (ProjectTab *self,
+	              int        *columns,
+		      int        *rows)
+{
+  if (columns)
+    *columns = vte_terminal_get_column_count (VTE_TERMINAL (self->vte));
+  if (rows)
+    *rows = vte_terminal_get_row_count (VTE_TERMINAL (self->vte));
+}
+
+void
+project_tab_set_size (ProjectTab *self,
+                      int         columns,
+                      int         rows)
+{
+  vte_terminal_set_size (VTE_TERMINAL (self->vte), columns, rows);
 }
 
 const char *
