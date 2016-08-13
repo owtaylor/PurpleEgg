@@ -84,7 +84,7 @@ static void
 project_tab_constructed (GObject *object)
 {
   ProjectTab *self = PROJECT_TAB (object);
-  const char *terminal_argv[] = { "/bin/bash", "-l", "-c", "exec fedenv shell", NULL };
+  const char *terminal_argv[] = { "/bin/bash", "-l", "-c", "exec pegg shell", NULL };
   const char *terminal_envv[] = { "PURPLEEGG=1", NULL };
   GError *error = NULL;
 
