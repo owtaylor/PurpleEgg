@@ -27,7 +27,7 @@ ProjectApplication *
 project_application_new (void)
 {
 	return g_object_new (PROJECT_TYPE_APPLICATION,
-                       "application-id", "org.gnome.newterm",
+                       "application-id", "org.gnome.PurpleEgg",
                        NULL);
 }
 

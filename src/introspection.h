@@ -3,7 +3,7 @@
 
 #include <gio/gio.h>
 
-#define SEARCH_PATH "/org/gnome/newterm/SearchProvider"
+#define SEARCH_PATH "/org/gnome/PurpleEgg/SearchProvider"
 #define SEARCH_INTERFACE "org.gnome.Shell.SearchProvider2"
 
 GDBusNodeInfo      *get_introspection_info     (void);

@@ -1,6 +1,6 @@
 -include $(top_srcdir)/git.mk
 
-bin_PROGRAMS = newterm
+bin_PROGRAMS = PurpleEgg
 
 project.gresource.c: project.gresource.xml project-window.ui
 	$(GLIB_COMPILE_RESOURCES) --target=$@ --generate=.c $<
@@ -8,7 +8,7 @@ project.gresource.c: project.gresource.xml project-window.ui
 search-generated.c search-generated.h: org.gnome.ShellSearchProvider2.xml
 	gdbus-codegen --interface-prefix=org.gnome.Shell  --generate-c-code=search-generated org.gnome.ShellSearchProvider2.xml
 
-newterm_SOURCES = \
+PurpleEgg_SOURCES = \
 	introspection.c \
 	introspection.h \
 	main.c \
@@ -21,5 +21,5 @@ newterm_SOURCES = \
 	project.gresource.c \
 	search-generated.c \
 	search-generated.h
-newterm_CPPFLAGS = $(NEWTERM_CFLAGS) $(WARN_CFLAGS)
-newterm_LDFLAGS = $(NEWTERM_LIBS)
+PurpleEgg_CPPFLAGS = $(PURPLEEGG_CFLAGS) $(WARN_CFLAGS)
+PurpleEgg_LDFLAGS = $(PURPLEEGG_LIBS)

@@ -10,6 +10,7 @@ struct _ProjectWindow
   GtkStack *stack;
   GtkLabel *title;
   GtkComboBoxText *git_combo;
+  char *current_git_branch;
   GFileMonitor *git_head_monitor;
   GFileMonitor *git_refs_monitor;
 };
@@ -160,6 +161,9 @@ update_git (ProjectWindow *self)
   if (error)
     g_clear_error (&error);
 
+  g_free (self->current_git_branch);
+  self->current_git_branch = g_strdup (current_branch);
+
   gtk_widget_show (GTK_WIDGET (self->git_combo));
   gtk_combo_box_text_remove_all (self->git_combo);
 
@@ -179,6 +183,63 @@ on_git_changed (GFileMonitor      *monitor,
                 ProjectWindow     *self)
 {
   update_git (self);
+}
+
+static void
+on_git_branch_done (GObject      *source_object,
+		    GAsyncResult *result,
+		    gpointer      user_data)
+{
+  GSubprocess *subprocess = G_SUBPROCESS (source_object);
+
+  GError *error = NULL;
+  g_autofree char *stdout_buffer = NULL;
+  g_autofree char *stderr_buffer = NULL;
+  if (!g_subprocess_communicate_utf8_finish (subprocess, result,
+					     &stdout_buffer, &stderr_buffer,
+					     &error))
+    {
+      g_printerr ("Error running git branch: %s\n", error->message);
+      g_clear_error (&error);
+      return;
+    }
+
+  if (g_subprocess_get_status (subprocess) != 0)
+    {
+      g_printerr ("git branch failed:\n%s\n", stderr_buffer);
+    }
+}
+
+static void
+on_git_combo_changed (GtkComboBox   *combo,
+		      ProjectWindow *self)
+{
+  const char *branch = gtk_combo_box_text_get_active_text (self->git_combo);
+  if (branch && branch[0] &&
+      self->current_git_branch &&
+      strcmp (branch, self->current_git_branch) != 0)
+    {
+      g_autofree char *git_dir = g_build_filename (self->directory, ".git", NULL);
+      g_autofree char *git_dir_arg = g_strconcat ("--git-dir=", git_dir, NULL);
+      GError *error = NULL;
+      g_autoptr(GSubprocess) subprocess = g_subprocess_new (G_SUBPROCESS_FLAGS_STDOUT_PIPE |
+							     G_SUBPROCESS_FLAGS_STDERR_PIPE,
+							    &error,
+							     "git",
+							     git_dir_arg,
+							     "checkout",
+							     branch,
+							     NULL);
+      if (!subprocess)
+	{
+	  g_printerr ("Failed to exec git checkout%s\n", error->message);
+	  g_clear_error (&error);
+	  return;
+      	}
+
+      g_subprocess_communicate_utf8_async (subprocess, NULL, NULL,
+		  	                   on_git_branch_done, self);
+    }
 }
 
 static void
@@ -254,7 +315,7 @@ project_window_class_init (ProjectWindowClass *klass)
                                    properties [PROP_DIRECTORY]);
 
   gtk_widget_class_set_template_from_resource (GTK_WIDGET_CLASS (klass),
-                                               "/org/gnome/NewTerm/project-window.ui");
+                                               "/org/gnome/PurpleEgg/project-window.ui");
   gtk_widget_class_bind_template_child (GTK_WIDGET_CLASS (klass), ProjectWindow, stack);
   gtk_widget_class_bind_template_child (GTK_WIDGET_CLASS (klass), ProjectWindow, title);
   gtk_widget_class_bind_template_child (GTK_WIDGET_CLASS (klass), ProjectWindow, git_combo);
@@ -376,6 +437,9 @@ project_window_init (ProjectWindow *self)
   g_action_map_add_action_entries (G_ACTION_MAP (self),
                                    window_actions, G_N_ELEMENTS (window_actions),
                                    self);
+
+  g_signal_connect (self->git_combo, "changed",
+		    G_CALLBACK (on_git_combo_changed), self);
 }
 
 const char *

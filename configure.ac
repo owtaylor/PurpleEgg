@@ -8,7 +8,7 @@ m4_define([major_version],[0])
 m4_define([minor_version],[1])
 m4_define([micro_version],[0])
 m4_define([package_version],[major_version.minor_version.micro_version])
-m4_define([bug_report_url],[https://bugzilla.gnome.org/enter_bug.cgi?product=newterm])
+m4_define([bug_report_url],[https://bugzilla.gnome.org/enter_bug.cgi?product=PurpleEgg])
 m4_define([api_version],[0])
 
 AX_IS_RELEASE([micro-version])
@@ -16,7 +16,7 @@ AX_IS_RELEASE([micro-version])
 dnl ***********************************************************************
 dnl Initialize autoconf
 dnl ***********************************************************************
-AC_INIT([newterm],[package_version],[bug_report_url])
+AC_INIT([PurpleEgg],[package_version],[bug_report_url])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_SRCDIR([NEWS])
 AC_CONFIG_MACRO_DIR([m4])
@@ -88,7 +88,7 @@ AX_CHECK_COMPILE_FLAG([-std=gnu11],
 dnl ***********************************************************************
 dnl Check for required packages
 dnl ***********************************************************************
-PKG_CHECK_MODULES(NEWTERM, [gio-2.0 >= 2.42 gtk+-3.0 >= 3.20 vte-2.91])
+PKG_CHECK_MODULES(PURPLEEGG, [gio-2.0 >= 2.42 gtk+-3.0 >= 3.20 vte-2.91])
 
 
 dnl ***********************************************************************
