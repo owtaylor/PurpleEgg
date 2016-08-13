@@ -82,6 +82,14 @@ get_matching_projects (ProjectApplication *application,
                                                                      "standard::name",
                                                                      G_FILE_QUERY_INFO_NONE,
                                                                      NULL, error);
+  g_auto(GStrv) folded_terms = g_new (char *, g_strv_length ((char **)terms));
+  int i = 0;
+  for (i = 0; terms[i]; i++)
+    {
+      folded_terms[i] = g_utf8_casefold(terms[i], -1);
+    }
+  folded_terms[i] = NULL;
+
   while (TRUE)
     {
       g_autoptr(GFileInfo) info = g_file_enumerator_next_file (enumerator, NULL, error);
@@ -93,10 +101,11 @@ get_matching_projects (ProjectApplication *application,
         }
 
       const char *name = g_file_info_get_name (info);
+      g_autofree char *folded_name = g_utf8_casefold (name, -1);
       gboolean matches = TRUE;
-      for (const char *const *term = terms; matches && *term; term++)
+      for (char **term = folded_terms; matches && *term; term++)
         {
-          if (strstr(name, *term) == NULL)
+          if (strstr(folded_name, *term) == NULL)
             matches = FALSE;
         }
 
