@@ -33,11 +33,11 @@ static GParamSpec *properties [N_PROPS];
 
 ProjectWindow *
 project_window_new (ProjectApplication *application,
-		    const char         *directory)
+                    const char         *directory)
 {
   return g_object_new (PROJECT_TYPE_WINDOW,
-		       "application", application,
- 	               "directory", directory,
+                       "application", application,
+                       "directory", directory,
                        NULL);
 }
 
@@ -93,7 +93,7 @@ project_window_set_property (GObject      *object,
 
 static char **
 list_git_branches (ProjectWindow *self,
-		   GError       **error)
+                   GError       **error)
 {
   GPtrArray *results = g_ptr_array_new();
 
@@ -130,15 +130,15 @@ fail:
 
 static char *
 get_git_branch (ProjectWindow *self,
-	        GError       **error)
+                GError       **error)
 {
   g_autofree char *git_head = g_build_filename (self->directory, ".git", "HEAD", NULL);
   g_autoptr(GFile) git_head_file = g_file_new_for_path (git_head);
 
   g_autofree char *contents = NULL;
   if (!g_file_load_contents (git_head_file, NULL,
-			     &contents, NULL, NULL,
-			     error))
+                             &contents, NULL, NULL,
+                             error))
     return NULL;
 
   g_strstrip (contents);
@@ -175,13 +175,13 @@ update_git (ProjectWindow *self)
     {
       gtk_combo_box_text_append_text (self->git_combo, branches[i]);
       if (g_strcmp0 (branches[i], current_branch) == 0)
-	gtk_combo_box_set_active (GTK_COMBO_BOX (self->git_combo), i);
+        gtk_combo_box_set_active (GTK_COMBO_BOX (self->git_combo), i);
     }
 }
 
 static void
 on_git_changed (GFileMonitor      *monitor,
-       	        GFile             *file,
+                GFile             *file,
                 GFile             *other_file,
                 GFileMonitorEvent  event_type,
                 ProjectWindow     *self)
@@ -191,8 +191,8 @@ on_git_changed (GFileMonitor      *monitor,
 
 static void
 on_git_branch_done (GObject      *source_object,
-		    GAsyncResult *result,
-		    gpointer      user_data)
+                    GAsyncResult *result,
+                    gpointer      user_data)
 {
   GSubprocess *subprocess = G_SUBPROCESS (source_object);
 
@@ -200,8 +200,8 @@ on_git_branch_done (GObject      *source_object,
   g_autofree char *stdout_buffer = NULL;
   g_autofree char *stderr_buffer = NULL;
   if (!g_subprocess_communicate_utf8_finish (subprocess, result,
-					     &stdout_buffer, &stderr_buffer,
-					     &error))
+                                             &stdout_buffer, &stderr_buffer,
+                                             &error))
     {
       g_printerr ("Error running git branch: %s\n", error->message);
       g_clear_error (&error);
@@ -216,7 +216,7 @@ on_git_branch_done (GObject      *source_object,
 
 static void
 on_git_combo_changed (GtkComboBox   *combo,
-		      ProjectWindow *self)
+                      ProjectWindow *self)
 {
   const char *branch = gtk_combo_box_text_get_active_text (self->git_combo);
   if (branch && branch[0] &&
@@ -227,22 +227,22 @@ on_git_combo_changed (GtkComboBox   *combo,
       g_autofree char *git_dir_arg = g_strconcat ("--git-dir=", git_dir, NULL);
       GError *error = NULL;
       g_autoptr(GSubprocess) subprocess = g_subprocess_new (G_SUBPROCESS_FLAGS_STDOUT_PIPE |
-							     G_SUBPROCESS_FLAGS_STDERR_PIPE,
-							    &error,
-							     "git",
-							     git_dir_arg,
-							     "checkout",
-							     branch,
-							     NULL);
+                                                             G_SUBPROCESS_FLAGS_STDERR_PIPE,
+                                                            &error,
+                                                             "git",
+                                                             git_dir_arg,
+                                                             "checkout",
+                                                             branch,
+                                                             NULL);
       if (!subprocess)
-	{
-	  g_printerr ("Failed to exec git checkout%s\n", error->message);
-	  g_clear_error (&error);
-	  return;
-      	}
+        {
+          g_printerr ("Failed to exec git checkout%s\n", error->message);
+          g_clear_error (&error);
+          return;
+        }
 
       g_subprocess_communicate_utf8_async (subprocess, NULL, NULL,
-		  	                   on_git_branch_done, self);
+                                           on_git_branch_done, self);
     }
 }
 
@@ -265,11 +265,11 @@ project_window_constructed (GObject *object)
   g_autoptr(GFile) git_head_file = g_file_new_for_path (git_head);
   self->git_head_monitor = g_file_monitor_file (git_head_file,
                                                 G_FILE_MONITOR_NONE,
-					        NULL, &error);
+                                                NULL, &error);
   if (self->git_head_monitor)
     {
       g_signal_connect (self->git_head_monitor, "changed",
-			G_CALLBACK (on_git_changed), self);
+                        G_CALLBACK (on_git_changed), self);
     }
   else
     {
@@ -281,11 +281,11 @@ project_window_constructed (GObject *object)
   g_autoptr(GFile) git_refs_file = g_file_new_for_path (git_refs);
   self->git_refs_monitor = g_file_monitor_directory (git_refs_file,
                                                      G_FILE_MONITOR_NONE,
-					             NULL, &error);
+                                                     NULL, &error);
   if (self->git_refs_monitor)
     {
       g_signal_connect (self->git_refs_monitor, "changed",
-			G_CALLBACK (on_git_changed), self);
+                        G_CALLBACK (on_git_changed), self);
     }
   else
     {
@@ -300,7 +300,7 @@ project_window_constructed (GObject *object)
 
 static void
 project_window_size_allocate (GtkWidget     *widget,
-			      GtkAllocation *allocation)
+                              GtkAllocation *allocation)
 {
   ProjectWindow *self = PROJECT_WINDOW (widget);
 
@@ -332,13 +332,13 @@ project_window_class_init (ProjectWindowClass *klass)
   widget_class->size_allocate = project_window_size_allocate;
 
   properties[PROP_DIRECTORY] =
-  	g_param_spec_string ("directory",
-  	                     "Directory",
-  	                     "Directory",
-  	                     NULL,
-  	                     (G_PARAM_CONSTRUCT_ONLY |
-			      G_PARAM_READWRITE |
-  	                      G_PARAM_STATIC_STRINGS));
+        g_param_spec_string ("directory",
+                             "Directory",
+                             "Directory",
+                             NULL,
+                             (G_PARAM_CONSTRUCT_ONLY |
+                              G_PARAM_READWRITE |
+                              G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (object_class, PROP_DIRECTORY,
                                    properties [PROP_DIRECTORY]);
 
@@ -360,12 +360,12 @@ update_titles (ProjectWindow *self)
       const char *title = project_tab_get_title (l->data);
       g_autofree char *to_set = NULL;
       if (*title != '\0')
-      	to_set = g_strdup_printf ("%d %s", i, title);
+        to_set = g_strdup_printf ("%d %s", i, title);
       else
-	to_set = g_strdup_printf ("%d", i);
+        to_set = g_strdup_printf ("%d", i);
       gtk_container_child_set (GTK_CONTAINER (self->stack), l->data,
-			       "title", to_set,
-			       NULL);
+                               "title", to_set,
+                               NULL);
       i++;
     }
 
@@ -392,14 +392,14 @@ set_active_tab_cb (GSimpleAction *action,
 
 static void
 on_tab_destroy (GObject       *object,
-	        ProjectWindow *self)
+                ProjectWindow *self)
 {
   update_titles (self);
 }
 
 static void
 on_title_changed (ProjectTab    *tab,
-	          ProjectWindow *self)
+                  ProjectWindow *self)
 {
   update_titles (self);
 }
@@ -412,17 +412,17 @@ new_tab (ProjectWindow *self)
   gtk_widget_show (GTK_WIDGET (tab));
   gtk_container_add (GTK_CONTAINER (self->stack), GTK_WIDGET (tab));
   g_signal_connect (tab, "destroy",
-		    G_CALLBACK (on_tab_destroy), self);
+                    G_CALLBACK (on_tab_destroy), self);
   g_signal_connect (tab, "title-changed",
-		    G_CALLBACK (on_title_changed), self);
+                    G_CALLBACK (on_title_changed), self);
   update_titles (self);
   gtk_stack_set_visible_child (self->stack, GTK_WIDGET (tab));
 }
 
 static void
 new_tab_cb (GSimpleAction *action,
-	    GVariant      *parameter,
-	    gpointer       user_data)
+            GVariant      *parameter,
+            gpointer       user_data)
 {
   new_tab (user_data);
 }
@@ -526,7 +526,7 @@ project_window_init (ProjectWindow *self)
                                    self);
 
   g_signal_connect (self->git_combo, "changed",
-		    G_CALLBACK (on_git_combo_changed), self);
+                    G_CALLBACK (on_git_combo_changed), self);
 }
 
 const char *

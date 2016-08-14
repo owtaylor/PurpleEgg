@@ -7,7 +7,7 @@
 
 struct _ProjectApplication
 {
-	GtkApplication parent_instance;
+        GtkApplication parent_instance;
   guint registration_id;
   SearchProvider2 *search_skeleton;
 };
@@ -15,8 +15,8 @@ struct _ProjectApplication
 G_DEFINE_TYPE (ProjectApplication, project_application, GTK_TYPE_APPLICATION)
 
 enum {
-	PROP_0,
-	N_PROPS
+        PROP_0,
+        N_PROPS
 };
 
 static void create_or_activate_window (ProjectApplication *self,
@@ -26,7 +26,7 @@ static void create_or_activate_window (ProjectApplication *self,
 ProjectApplication *
 project_application_new (void)
 {
-	return g_object_new (PROJECT_TYPE_APPLICATION,
+        return g_object_new (PROJECT_TYPE_APPLICATION,
                        "application-id", "org.gnome.PurpleEgg",
                        NULL);
 }
@@ -34,9 +34,9 @@ project_application_new (void)
 static void
 project_application_finalize (GObject *object)
 {
-	// ProjectApplication *self = (ProjectApplication *)object;
+        // ProjectApplication *self = (ProjectApplication *)object;
 
-	G_OBJECT_CLASS (project_application_parent_class)->finalize (object);
+        G_OBJECT_CLASS (project_application_parent_class)->finalize (object);
 }
 
 static void
@@ -45,13 +45,13 @@ project_application_get_property (GObject    *object,
                                   GValue     *value,
                                   GParamSpec *pspec)
 {
-	// ProjectApplication *self = PROJECT_APPLICATION (object);
+        // ProjectApplication *self = PROJECT_APPLICATION (object);
 
-	switch (prop_id)
-	  {
-	  default:
-	    G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-	  }
+        switch (prop_id)
+          {
+          default:
+            G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+          }
 }
 
 static void
@@ -60,13 +60,13 @@ project_application_set_property (GObject      *object,
                                   const GValue *value,
                                   GParamSpec   *pspec)
 {
-	// ProjectApplication *self = PROJECT_APPLICATION (object);
+        // ProjectApplication *self = PROJECT_APPLICATION (object);
 
-	switch (prop_id)
-	  {
-	  default:
-	    G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-	  }
+        switch (prop_id)
+          {
+          default:
+            G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+          }
 }
 
 static char **

@@ -30,8 +30,8 @@ ProjectTab *
 project_tab_new (const char    *directory)
 {
   return g_object_new (PROJECT_TYPE_TAB,
-		       "directory", directory,
-		       NULL);
+                       "directory", directory,
+                       NULL);
 }
 
 static void
@@ -93,7 +93,7 @@ project_tab_constructed (GObject *object)
                            VTE_PTY_DEFAULT,
                            self->directory,
                            (char **)terminal_argv,
-			   (char **)terminal_envv,
+                           (char **)terminal_envv,
                            G_SPAWN_DEFAULT,
                            NULL, /* child_setup */
                            NULL, /* child_setup_data */
@@ -136,24 +136,24 @@ project_tab_class_init (ProjectTabClass *klass)
   widget_class->get_preferred_height_for_width = project_tab_get_preferred_height_for_width;
 
   signals[TITLE_CHANGED] =
-  	g_signal_new ("title-changed",
-  	              G_TYPE_FROM_CLASS (klass),
-  	              G_SIGNAL_RUN_LAST,
-  	              0,
-  	              NULL,
-  	              NULL,
-  	              NULL,
-  	              G_TYPE_NONE,
-  	              0);
+        g_signal_new ("title-changed",
+                      G_TYPE_FROM_CLASS (klass),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL,
+                      NULL,
+                      NULL,
+                      G_TYPE_NONE,
+                      0);
 
   properties [PROP_DIRECTORY] =
-  	g_param_spec_string ("directory",
-  	                     "Directory",
-  	                     "Directory",
-  	                     NULL,
-  	                     (G_PARAM_CONSTRUCT_ONLY |
-			      G_PARAM_READWRITE |
-  	                      G_PARAM_STATIC_STRINGS));
+        g_param_spec_string ("directory",
+                             "Directory",
+                             "Directory",
+                             NULL,
+                             (G_PARAM_CONSTRUCT_ONLY |
+                              G_PARAM_READWRITE |
+                              G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (object_class, PROP_DIRECTORY,
                                    properties [PROP_DIRECTORY]);
 }
@@ -175,7 +175,7 @@ on_current_directory_uri_changed (VteTerminal *vte)
 
 static void
 on_window_title_changed (VteTerminal *vte,
-			 ProjectTab  *self)
+                         ProjectTab  *self)
 {
   const char *title = vte_terminal_get_window_title (vte);
   g_free (self->title);
@@ -212,15 +212,15 @@ project_tab_init (ProjectTab *self)
 {
   self->scrolled_window = gtk_scrolled_window_new (NULL, NULL);
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (self->scrolled_window),
-				  GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+                                  GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 
   self->vte = vte_terminal_new ();
 
   vte_terminal_set_colors(VTE_TERMINAL (self->vte),
                           &foreground_color,
-			  &background_color,
-			  palette,
-			  G_N_ELEMENTS(palette));
+                          &background_color,
+                          palette,
+                          G_N_ELEMENTS(palette));
 
   self->title = g_strdup ("");
 
@@ -240,15 +240,15 @@ project_tab_init (ProjectTab *self)
 
 void
 project_tab_set_font_scale (ProjectTab *self,
-			    double      font_scale)
+                            double      font_scale)
 {
   vte_terminal_set_font_scale (VTE_TERMINAL (self->vte), font_scale);
 }
 
 void
 project_tab_get_size (ProjectTab *self,
-	              int        *columns,
-		      int        *rows)
+                      int        *columns,
+                      int        *rows)
 {
   if (columns)
     *columns = vte_terminal_get_column_count (VTE_TERMINAL (self->vte));
