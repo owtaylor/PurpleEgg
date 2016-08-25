@@ -90,6 +90,8 @@ dnl Check for required packages
 dnl ***********************************************************************
 PKG_CHECK_MODULES(PURPLEEGG, [gio-2.0 >= 2.42 gtk+-3.0 >= 3.20 vte-2.91])
 
+PKG_CHECK_MODULES(PEGG, [gio-unix-2.0])
+
 
 dnl ***********************************************************************
 dnl Initialize Libtool
@@ -103,10 +105,8 @@ dnl Process .in Files
 dnl ***********************************************************************
 AC_CONFIG_FILES([
 	Makefile
-
-
+	cli/Makefile
 	data/Makefile
-
 	po/Makefile.in
 	src/Makefile
 ],[],

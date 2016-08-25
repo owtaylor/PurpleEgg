@@ -1,4 +1,5 @@
 SUBDIRS = \
+	cli \
 	data \
 	po \
 	src \

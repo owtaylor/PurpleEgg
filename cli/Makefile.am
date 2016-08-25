@@ -1,0 +1,16 @@
+-include $(top_srcdir)/git.mk
+
+EXTRA_DIST =
+
+libexec_PROGRAMS = pegg-docker-launch
+
+pegg_docker_launch_SOURCES = docker-launch.c
+pegg_docker_launch_CFLAGS = $(PEGG_CFLAGS)
+pegg_docker_launch_LDFLAGS = $(PEGG_LIBS)
+
+bin_SCRIPTS = pegg
+
+pegg: pegg.in
+	sed "s,@LIBEXEC@,$(libexecdir),g" < $< > $@
+EXTRA_DIST += pegg.in
+

@@ -1,0 +1,383 @@
+#!/usr/bin/env python3
+
+import argparse
+import fcntl
+import os
+import pwd
+import select
+import shlex
+import subprocess
+import sys
+import yaml
+
+def die(msg):
+    print(msg, file=sys.stderr)
+    sys.exit(1)
+
+BASHRC = '''
+# Source global definitions
+if [ -f /etc/bashrc ]; then
+	. /etc/bashrc
+fi
+
+PEGG_HOME="/Projects/{project_name}"
+PEGG_PROJECT="{project_name}"
+export PEGG_HOME PEGG_PROJECT
+
+pegg_tag() {{
+    p="$(pwd)"
+    if [ "$p" = "$PEGG_HOME" ] ; then
+        s=
+    else
+        sep=:
+        s="${{p#$PEGG_HOME/}}"
+    fi
+    if [ -n "$PURPLEEGG" ] ; then
+       echo -n "$s"
+    else
+       echo -n "[[$PEGG_PROJECT$sep$s]]"
+    fi
+}}
+
+pegg_title() {{
+   echo -ne "\033]0;"
+   pegg_tag
+   echo -ne "\007"
+}}
+
+pegg_prompt() {{
+   pegg_tag
+   echo -n "$ "
+}}
+
+pegg_cd() {{
+    if [ $# = 0 ] ; then
+        cd "$PEGG_HOME"
+    else
+        cd "$@"
+    fi
+}}
+
+if [ -e "$PEGG_HOME/package.json" ] ; then
+    if [[ ":$PATH:" != *":$PEGG_HOME/node_modules/.bin:"* ]] ; then
+        PATH="$PEGG_HOME/node_modules/.bin:$PATH"
+    fi
+elif [ -d "$PEGG_HOME/venv" ] ; then
+    source "$PEGG_HOME/venv/bin/activate"
+fi
+
+PS1='\[$(pegg_title)\]$(pegg_prompt)'
+alias cd=pegg_cd
+'''
+
+INSTALL_COMMAND='RUN dnf -y install {package_list}'
+
+DOCKERFILE='''
+FROM {base_image}
+
+RUN dnf -y update; dnf clean all
+RUN dnf -y install git less
+{install_command}
+
+RUN groupadd -g {gid} {username}
+RUN useradd -u {uid} -g {gid} {username}
+USER {uid}
+
+COPY bashrc /home/{username}/.bashrc
+COPY gitconfig /home/{username}/.gitconfig
+'''
+
+PEGG_BASHRC = '''
+#!/bin/sh
+
+if [ -f ~/.bashrc ]; then
+        . ~/.bashrc
+fi
+
+PEGG_HOME="$(pwd)"
+PEGG_PROJECT="$(basename $PEGG_HOME)"
+export PEGG_HOME PEGG_PROJECT
+
+pegg_tag() {
+    p="$(pwd)"
+    if [ "$p" = "$PEGG_HOME" ] ; then
+        s=
+    else
+        sep=:
+        s="${p#$PEGG_HOME/}"
+    fi
+    if [ -n "$PURPLEEGG" ] ; then
+       echo -n "$s"
+    else
+       echo -n "[[$PEGG_PROJECT$sep$s]]"
+    fi
+}
+
+pegg_title() {
+   echo -ne "\033]0;"
+   pegg_tag
+   echo -ne "\007"
+}
+
+pegg_prompt() {
+   pegg_tag
+   echo -n "$ "
+}
+
+pegg_cd() {
+    if [ $# = 0 ] ; then
+        cd "$PEGG_HOME"
+    else
+        cd "$@"
+    fi
+}
+
+if [ -e "$PEGG_HOME/package.json" ] ; then
+    if [[ ":$PATH:" != *":$PEGG_HOME/node_modules/.bin:"* ]] ; then
+        PATH="$PEGG_HOME/node_modules/.bin:$PATH"
+    fi
+elif [ -d "$PEGG_HOME/venv" ] ; then
+    source "$PEGG_HOME/venv/bin/activate"
+fi
+
+PS1='\[$(pegg_title)\]$(pegg_prompt)'
+alias cd=pegg_cd
+'''
+
+PEGG_RUN_SH = '''
+#!/bin/sh
+
+source venv/bin/activate
+exec "$@"
+'''
+
+def maybe_write_file(path, contents):
+    old=None
+    try:
+        with open(path) as f:
+            old=f.read()
+    except IOError:
+        pass
+    if old != contents:
+        with open(path, "w") as f:
+            f.write(contents)
+        return True
+    else:
+        return False
+
+class Environment(object):
+    def __init__(self):
+        self.base_dir = os.getcwd()
+        self.data_dir = os.path.join(self.base_dir, '.pegg')
+
+    def ensure_data_dir(self):
+        if not os.path.isdir(self.data_dir):
+            os.mkdir(self.data_dir)
+
+    def data_file(self, name):
+        return os.path.join(self.data_dir, name)
+
+    def shell(self, as_root=False):
+        self.run(['/bin/bash', '-l'], interactive=True, tty=True, as_root=as_root)
+
+class ContainerEnvironment(Environment):
+    def __init__(self):
+        Environment.__init__(self)
+
+        d = os.getcwd()
+        while True:
+            if os.path.exists(os.path.join(d, 'pegg.yaml')):
+                break
+            if d == '/':
+                die("Can't find pegg.yaml in the current directory or any parent")
+            d = os.path.dirname(d)
+
+        if d != self.base_dir:
+            die("I broke it")
+
+        self.yaml_file = os.path.join(self.base_dir, 'pegg.yaml')
+        self.data_dir = os.path.join(self.base_dir, '.pegg')
+        self.project_name = os.path.basename(self.base_dir)
+        self._image_name = None
+
+        with open(self.yaml_file, 'r') as f:
+	        data = yaml.load(f)
+
+        try:
+            self.base_image = data['base']
+        except KeyError:
+            die('pegg.yaml must specify the base image')
+
+        self.packages = data.get('packages', '')
+
+        self.ensure_data_dir()
+
+    def create_docker_file(self):
+        modified = False
+        if (maybe_write_file(self.data_file("bashrc"),
+                             BASHRC.format(project_name=self.project_name))):
+            modified = True
+
+        with open(os.path.join(os.environ["HOME"], ".gitconfig")) as f:
+            gitconfig_contents = f.read()
+
+        if (maybe_write_file(self.data_file("gitconfig"), gitconfig_contents)):
+            modified = True
+
+        uid = os.getuid();
+        gid = os.getgid();
+        if len(self.packages) > 0:
+            package_list = " ".join([shlex.quote(x) for x in self.packages])
+            install_command = INSTALL_COMMAND.format(package_list=package_list)
+        else:
+            install_command = ''
+
+        if maybe_write_file(self.data_file("Dockerfile"),
+                            DOCKERFILE.format(base_image=self.base_image,
+                                              install_command=install_command,
+                                              uid=uid,
+                                              gid=gid,
+                                              username=pwd.getpwuid(uid)[0])):
+            modified = True
+
+        return modified
+
+    @property
+    def image_name(self):
+        if self._image_name is not None:
+            return self._image_name
+
+        image_name = None
+        try:
+            with open(self.data_file("image_name")) as f:
+                image_name = f.read().strip()
+        except IOError:
+            pass
+
+        if image_name is None:
+            count = 0
+            while True:
+                image_name = 'pegg_' + self.project_name.lower()
+                if count != 0:
+                    image_name += '_{}'.format(count)
+                output = subprocess.check_output(["docker", "images", "-q", image_name])
+                if output.strip() == b'':
+                    break
+
+                count += 1
+                if count == 20:
+                    die("Can't find free image name")
+        with open(self.data_file("image_name"), "w") as f:
+            print(image_name, file=f)
+
+        self._image_name = image_name
+        return self._image_name
+
+    def ensure_image(self):
+        if self.create_docker_file():
+            subprocess.check_call(["docker", "build", "-t", self.image_name, self.data_dir])
+
+    def run(self, command, interactive=False, tty=False, as_root=False):
+        args = []
+        if interactive:
+            args.append('--interactive')
+        if tty:
+            args.append('--tty')
+        dest_project_dir = os.path.join("/Projects", self.project_name)
+        args.append('--net=host')
+        args += ['-v', self.base_dir + ':' + dest_project_dir + ':z']
+        args += ['-v', '/:/host']
+        args += ['-w', dest_project_dir]
+        if as_root:
+          args += ['-u', '0']
+        term = os.getenv("TERM")
+        if term is not None:
+            args += ['-e', 'TERM=' + term ]
+        purpleegg = os.getenv("PURPLEEGG")
+        if purpleegg is not None:
+            args += ['-e', 'PURPLEEGG=' + term ]
+        args.append(self.image_name)
+        args += command
+
+        r, w = os.pipe()
+        fcntl.fcntl(r, fcntl.F_SETFD, r & ~fcntl.FD_CLOEXEC)
+
+        pid = os.fork()
+        if pid:
+            os.close(r)
+            os.waitpid(pid, 0)
+        else:
+            os.close(w)
+            os.execvp('@LIBEXEC@/pegg-docker-launch', ['pegg-docker-launch', str(r)] + args)
+
+class PlainEnvironment(Environment):
+    def __init__(self):
+        Environment.__init__(self)
+        self.ensure_data_dir()
+        maybe_write_file(self.data_file("pegg-run.sh"),
+                         PEGG_RUN_SH)
+        maybe_write_file(self.data_file("bashrc"),
+                         PEGG_BASHRC)
+
+    def run(self, command, interactive=False, tty=False, as_root=False):
+        os.execvp("bash", ["bash", self.data_file("pegg-run.sh")] + command)
+
+    def shell(self, as_root=False):
+        os.execvp("bash", ["bash", "-l", "-c", "exec $0 $@", "bash", "--rcfile", ".pegg/bashrc"])
+
+def main():
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers(dest='cmd')
+
+    shell_parser = subparsers.add_parser('shell', help='Run a shell')
+    shell_parser.add_argument('-r', '--as-root', help='Run as root', action='store_true')
+
+    run_parser = subparsers.add_parser('run', help='Run an arbitrary command')
+    run_parser.add_argument('-i', '--interactive', help='Keep stdin open even if not attached', action='store_true')
+    run_parser.add_argument('-t', '--tty', help='Allocate a pseudo-tty', action='store_true')
+    run_parser.add_argument('-r', '--as-root', help='Run as root', action='store_true')
+    run_parser.add_argument('command', nargs='*')
+
+    create_parser = subparsers.add_parser('create', help='Start a new project')
+    create_parser.add_argument('template', help='Template for project')
+    create_parser.add_argument('name', help='Name of project')
+
+    args = parser.parse_args()
+
+    if args.cmd == 'create':
+        if args.template != 'django':
+            die("template must currently be django")
+
+        path=os.path.join(os.getenv('HOME'), 'Projects', args.name)
+        os.mkdir(path)
+        with open(os.path.join(path, 'pegg.yaml'), 'w') as f:
+            print('''base: fedora:24
+packages:
+- python3-virtualenv
+- python3-django
+''', file=f)
+        os.chdir(path)
+        e = ContainerEnvironment()
+        e.ensure_image()
+        # Hack
+        subprocess.call(['pegg', 'run', '--', 'py3-virtualenv', '--system-site-packages', 'venv'])
+        subprocess.call(['pegg', 'run', '--', 'python3-django-admin', 'startproject', args.name, '.'])
+        return
+
+    d = os.getcwd()
+    if os.path.exists(os.path.join(d, 'pegg.yaml')):
+        e = ContainerEnvironment()
+        e.ensure_image()
+    else:
+        e = PlainEnvironment()
+
+    if args.cmd == 'shell':
+        e.shell(as_root=args.as_root)
+    elif args.cmd == 'run':
+        e.run(args.command, interactive=args.interactive, tty=args.tty, as_root=args.as_root)
+    else:
+        parser.print_help()
+        sys.exit(1)
+
+if __name__ == '__main__':
+    main()
