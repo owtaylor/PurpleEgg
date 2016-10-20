@@ -295,7 +295,7 @@ class ContainerEnvironment(Environment):
             args += ['-e', 'TERM=' + term ]
         purpleegg = os.getenv("PURPLEEGG")
         if purpleegg is not None:
-            args += ['-e', 'PURPLEEGG=' + term ]
+            args += ['-e', 'PURPLEEGG=' + purpleegg ]
         args.append(self.image_name)
         args += command
 
