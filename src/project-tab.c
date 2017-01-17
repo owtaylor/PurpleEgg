@@ -103,19 +103,18 @@ project_tab_constructed (GObject *object)
 }
 
 static void
-project_tab_get_preferred_height (GtkWidget *widget,
-                                  int       *minimum_height,
-                                  int       *natural_height)
+project_tab_get_preferred_width (GtkWidget *widget,
+                                  int       *minimum_width,
+                                  int       *natural_width)
 {
   ProjectTab *self = PROJECT_TAB (widget);
-  gtk_widget_get_preferred_height (self->vte, minimum_height, natural_height);
+  gtk_widget_get_preferred_width (self->vte, minimum_width, natural_width);
 }
 
 static void
-project_tab_get_preferred_height_for_width (GtkWidget *widget,
-                                            int        width,
-                                            int       *minimum_height,
-                                            int       *natural_height)
+project_tab_get_preferred_height (GtkWidget *widget,
+                                  int       *minimum_height,
+                                  int       *natural_height)
 {
   ProjectTab *self = PROJECT_TAB (widget);
   gtk_widget_get_preferred_height (self->vte, minimum_height, natural_height);
@@ -132,8 +131,8 @@ project_tab_class_init (ProjectTabClass *klass)
   object_class->constructed = project_tab_constructed;
 
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
+  widget_class->get_preferred_width = project_tab_get_preferred_width;
   widget_class->get_preferred_height = project_tab_get_preferred_height;
-  widget_class->get_preferred_height_for_width = project_tab_get_preferred_height_for_width;
 
   signals[TITLE_CHANGED] =
         g_signal_new ("title-changed",
