@@ -1,6 +1,7 @@
 -include $(top_srcdir)/git.mk
 
 EXTRA_DIST=
+CLEANFILES=
 
 icondir=$(datadir)/icons/hicolor/scalable/apps
 icon_DATA = org.gnome.PurpleEgg.svg
@@ -19,5 +20,10 @@ searchdir=$(datadir)/gnome-shell/search-providers
 search_DATA = org.gnome.PurpleEgg.search-provider.ini
 EXTRA_DIST += searchdir_DATA
 
-servicedir=/usr/share/dbus-1/services
+org.gnome.PurpleEgg.service: org.gnome.PurpleEgg.service.in
+	sed "s,@BINDIR@,$(bindir),g" < $< > $@
+
+CLEANFILES += org.gnome.PurpleEgg.service
+
+servicedir=$(datadir)/dbus-1/services
 service_DATA = org.gnome.PurpleEgg.service

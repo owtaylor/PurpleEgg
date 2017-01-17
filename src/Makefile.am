@@ -1,12 +1,20 @@
 -include $(top_srcdir)/git.mk
 
 bin_PROGRAMS = PurpleEgg
+CLEANFILES =
+BUILT_SOURCES =
 
 project.gresource.c: project.gresource.xml project-window.ui
-	$(GLIB_COMPILE_RESOURCES) --target=$@ --generate=.c $<
+	$(GLIB_COMPILE_RESOURCES) --sourcedir=$(srcdir) --target=$@ --generate=.c $<
+
+CLEANFILES += project.gresource.c
+BUILT_SOURCES += project.gresource.c
 
 search-generated.c search-generated.h: org.gnome.ShellSearchProvider2.xml
-	gdbus-codegen --interface-prefix=org.gnome.Shell  --generate-c-code=search-generated org.gnome.ShellSearchProvider2.xml
+	gdbus-codegen --interface-prefix=org.gnome.Shell  --generate-c-code=search-generated $<
+
+CLEANFILES += search-generated.c search-generated.h
+BUILT_SOURCES += search-generated.c search-generated.h
 
 PurpleEgg_SOURCES = \
 	introspection.c \

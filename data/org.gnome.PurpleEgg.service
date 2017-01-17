@@ -1,3 +1,0 @@
-[D-BUS Service]
-Name=org.gnome.PurpleEgg
-Exec=/usr/bin/PurpleEgg --gapplication-service
