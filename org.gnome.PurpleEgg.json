@@ -1,0 +1,54 @@
+{
+    "app-id": "org.gnome.PurpleEgg",
+    "runtime": "org.gnome.Platform",
+    "runtime-version": "master",
+    "sdk": "org.gnome.Sdk",
+    "command": "PurpleEgg",
+    "tags": ["devel"],
+    "finish-args": [
+        /* Used for HostCommand */
+        "--talk-name=org.freedesktop.Flatpak",
+        /* X11 + XShm access */
+        "--share=ipc", "--socket=x11",
+        /* Wayland access */
+        "--socket=wayland",
+        /* Network access */
+        "--share=network",
+        /* We want full fs access */
+        "--filesystem=host"
+    ],
+    "build-options": {
+        "cflags": "-O2 -g"
+    },
+    "modules": [
+        {
+            "name": "PyYAML",
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "http://pyyaml.org/download/pyyaml/PyYAML-3.12.tar.gz",
+                    "sha256": "592766c6303207a20efc445587778322d7f73b161bd994f227adaa341ba212ab"
+                },
+                {
+                    "type": "file",
+                    "path": "setuptools-makefile",
+                    "dest-filename": "Makefile"
+                },
+                {
+                    "type": "file",
+                    "path": "setuptools-configure",
+                    "dest-filename": "configure"
+                }
+            ]
+        },
+        {
+            "name": "PurpleEgg",
+            "sources": [
+                {
+                    "type": "git",
+                    "url": "git://git.gnome.org/PurpleEgg"
+                }
+            ]
+        }
+    ]
+}
