@@ -21,6 +21,7 @@
 /Makefile.in
 /TAGS
 /pegg-docker-launch
+/pegg-run-host
 /so_locations
 /tags
 _libs

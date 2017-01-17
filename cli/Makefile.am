@@ -2,11 +2,15 @@
 
 EXTRA_DIST =
 
-libexec_PROGRAMS = pegg-docker-launch
+libexec_PROGRAMS = pegg-docker-launch pegg-run-host
 
-pegg_docker_launch_SOURCES = docker-launch.c
+pegg_docker_launch_SOURCES = docker-launch.c host-command.c
 pegg_docker_launch_CFLAGS = $(PEGG_CFLAGS)
 pegg_docker_launch_LDFLAGS = $(PEGG_LIBS)
+
+pegg_run_host_SOURCES = run-host.c host-command.c
+pegg_run_host_CFLAGS = $(PEGG_CFLAGS)
+pegg_run_host_LDFLAGS = $(PEGG_LIBS)
 
 bin_SCRIPTS = pegg
 
