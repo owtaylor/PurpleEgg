@@ -1,5 +1,9 @@
 #include "project-tab.h"
 #include <vte/vte.h>
+#include <sys/ioctl.h>
+#include <termios.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 struct _ProjectTab
 {
@@ -81,6 +85,27 @@ project_tab_set_property (GObject      *object,
     }
 }
 
+
+static void
+child_setup (gpointer user_data)
+{
+  /* VTE's main child setup takes control of the terminal, but we want
+   * to leave that for the shell we run via HostCommand so that job
+   * control works properly in that shell, so we reverse that and give
+   * up control; propagating job control signals would be a less
+   * finicky way to do this in some ways, but (among other issues),
+   * having the terminal already owned by a different process causes
+   * a warning from flatpak-session-helper.
+   */
+
+  /* Giving up the controlling terminal causes a SIGHUP */
+  signal (SIGHUP, SIG_IGN);
+
+  int fd = open("/dev/tty", O_RDWR | O_NOCTTY);
+  ioctl (fd, TIOCNOTTY, 0);
+  close (fd);
+}
+
 static void
 project_tab_constructed (GObject *object)
 {
@@ -95,7 +120,7 @@ project_tab_constructed (GObject *object)
                            (char **)terminal_argv,
                            (char **)terminal_envv,
                            G_SPAWN_DEFAULT,
-                           NULL, /* child_setup */
+                           child_setup, /* child_setup */
                            NULL, /* child_setup_data */
                            NULL, /* child_pid_out */
                            NULL, /* cancellable */
