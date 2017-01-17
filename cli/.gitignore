@@ -20,9 +20,9 @@
 /Makefile
 /Makefile.in
 /TAGS
+/pegg
 /pegg-docker-launch
 /pegg-run-host
 /so_locations
 /tags
 _libs
-/pegg

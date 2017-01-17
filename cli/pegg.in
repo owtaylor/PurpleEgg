@@ -151,6 +151,21 @@ source venv/bin/activate
 exec "$@"
 '''
 
+xdg_runtime_dir = os.environ.get('XDG_RUNTIME_DIR',
+                                 os.path.join(os.path.expanduser('~'),
+                                              '.cache'))
+in_flatpak = os.path.exists (os.path.join(xdg_runtime_dir, "flatpak-info"))
+
+def check_call(args):
+    if in_flatpak:
+        args = ["@LIBEXEC@/pegg-run-host"] + args
+    return subprocess.check_call(args)
+
+def check_output(args):
+    if in_flatpak:
+        args = ["@LIBEXEC@/pegg-run-host"] + args
+    return subprocess.check_output(args)
+
 def maybe_write_file(path, contents):
     old=None
     try:
@@ -260,7 +275,7 @@ class ContainerEnvironment(Environment):
                 image_name = 'pegg_' + self.project_name.lower()
                 if count != 0:
                     image_name += '_{}'.format(count)
-                output = subprocess.check_output(["docker", "images", "-q", image_name])
+                output = check_output(["docker", "images", "-q", image_name])
                 if output.strip() == b'':
                     break
 
@@ -275,7 +290,7 @@ class ContainerEnvironment(Environment):
 
     def ensure_image(self):
         if self.create_docker_file():
-            subprocess.check_call(["docker", "build", "-t", self.image_name, self.data_dir])
+            check_call(["docker", "build", "-t", self.image_name, self.data_dir])
 
     def run(self, command, interactive=False, tty=False, as_root=False):
         args = []

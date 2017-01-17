@@ -14,7 +14,8 @@ pegg_run_host_LDFLAGS = $(PEGG_LIBS)
 
 bin_SCRIPTS = pegg
 
-pegg: pegg.in
+pegg: pegg.in Makefile
 	sed "s,@LIBEXEC@,$(libexecdir),g" < $< > $@
 EXTRA_DIST += pegg.in
 
+CLEANFILES = pegg
