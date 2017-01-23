@@ -290,7 +290,11 @@ class ContainerEnvironment(Environment):
 
     def ensure_image(self):
         if self.create_docker_file():
-            check_call(["docker", "build", "-t", self.image_name, self.data_dir])
+            try:
+                check_call(["docker", "build", "-t", self.image_name, self.data_dir])
+            except:
+                os.remove(self.data_file("Dockerfile"))
+                raise
 
     def run(self, command, interactive=False, tty=False, as_root=False):
         args = []
