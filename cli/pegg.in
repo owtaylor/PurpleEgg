@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 
 import argparse
+import datetime
 import fcntl
+import hashlib
 import os
 import pwd
+import re
 import select
 import shlex
 import subprocess
 import sys
+import urllib.request
 import yaml
 
 def die(msg):
@@ -70,13 +74,19 @@ PS1='\[$(pegg_title)\]$(pegg_prompt)'
 alias cd=pegg_cd
 '''
 
-INSTALL_COMMAND='RUN dnf -y install {package_list}'
+INSTALL_COMMAND='RUN dnf -C -y install {package_list}'
+
+# The way we update is meant to minimize downloads; we have one layer
+# which is the base image plus updates that we only regenerate once
+# a week, then we further update in a second layer any time the yum
+# metadata changes. Local installs are further layered on top of that.
 
 DOCKERFILE='''
 FROM {base_image}
 
-RUN dnf -y update; dnf clean all
-RUN dnf -y install git less
+RUN : {week}; dnf -y update
+RUN : {checksum}; dnf -y update
+RUN dnf -C -y install git less
 {install_command}
 
 RUN groupadd -g {gid} {username}
@@ -227,6 +237,21 @@ class ContainerEnvironment(Environment):
 
         self.ensure_data_dir()
 
+    def get_checksum(self):
+        print(self.base_image)
+        m = re.match('^fedora:(\d+)$', self.base_image)
+        if m is not None:
+            release = m.group(1)
+            url = 'http://dl.fedoraproject.org/pub/fedora/linux/updates/{release}/x86_64/'.format(release=release)
+        else:
+            die("Only Fedora base images are supported at the moment")
+
+        response = urllib.request.urlopen(url)
+        data = response.read()
+        m = hashlib.sha256()
+        m.update(data)
+        return m.hexdigest()
+
     def create_docker_file(self):
         modified = False
         if (maybe_write_file(self.data_file("bashrc"),
@@ -247,8 +272,13 @@ class ContainerEnvironment(Environment):
         else:
             install_command = ''
 
+        week = datetime.date.today().strftime("%G.%V")
+        checksum = self.get_checksum()
+
         if maybe_write_file(self.data_file("Dockerfile"),
                             DOCKERFILE.format(base_image=self.base_image,
+                                              week=week,
+                                              checksum=checksum,
                                               install_command=install_command,
                                               uid=uid,
                                               gid=gid,
