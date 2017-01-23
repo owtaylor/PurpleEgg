@@ -339,10 +339,16 @@ class PlainEnvironment(Environment):
                          PEGG_BASHRC)
 
     def run(self, command, interactive=False, tty=False, as_root=False):
-        os.execvp("bash", ["bash", self.data_file("pegg-run.sh")] + command)
+        if in_flatpak:
+            os.execvp("@LIBEXEC@/pegg-run-host", ["pegg-run-host", self.data_file("pegg-run.sh")] + command)
+        else:
+            os.execvp("bash", ["bash", self.data_file("pegg-run.sh")] + command)
 
     def shell(self, as_root=False):
-        os.execvp("bash", ["bash", "-l", "-c", "exec $0 $@", "bash", "--rcfile", ".pegg/bashrc"])
+        if in_flatpak:
+            os.execvp("@LIBEXEC@/pegg-run-host", ["pegg-run-host", "bash", "-l", "-c", "exec $0 $@", "bash", "--rcfile", ".pegg/bashrc"])
+        else:
+            os.execvp("bash", ["bash", "-l", "-c", "exec $0 $@", "bash", "--rcfile", ".pegg/bashrc"])
 
 def main():
     parser = argparse.ArgumentParser()
