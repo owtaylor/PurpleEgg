@@ -246,7 +246,6 @@ class ContainerEnvironment(Environment):
         self.ensure_data_dir()
 
     def get_checksum(self):
-        print(self.base_image)
         m = re.match('^fedora:(\d+)$', self.base_image)
         if m is not None:
             release = m.group(1)
