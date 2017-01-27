@@ -12,6 +12,10 @@ G_DECLARE_FINAL_TYPE (ProjectWindow, project_window, PROJECT, WINDOW, GtkApplica
 ProjectWindow *project_window_new (ProjectApplication *application,
                                    const char         *directory);
 
+ProjectApplication *project_window_get_application (ProjectWindow *window);
+
+void        project_window_set_directory (ProjectWindow *window,
+                                          const char    *directory);
 const char *project_window_get_directory (ProjectWindow *window);
 
 G_END_DECLS
