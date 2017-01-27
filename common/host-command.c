@@ -263,7 +263,7 @@ prepare_fd_list (PeggHostCommandFlags flags,
           goto cleanup;
         }
       *stdout_handle = g_unix_fd_list_append (fd_list,
-                                              (flags & PEGG_HOST_COMMAND_STDOUT_TO_DEV_NULL) ? stdout_fd : 1,
+                                              (flags & PEGG_HOST_COMMAND_STDOUT_TO_DEV_NULL) ? stdout_fd : pipes[3],
                                               error);
       if (*stdout_handle == -1)
         {
