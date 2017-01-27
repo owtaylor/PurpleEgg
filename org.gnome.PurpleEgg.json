@@ -46,7 +46,7 @@
             "sources": [
                 {
                     "type": "git",
-                    "url": "git://git.gnome.org/PurpleEgg"
+                    "url": "https://github.com/owtaylor/PurpleEgg.git"
                 }
             ]
         }
