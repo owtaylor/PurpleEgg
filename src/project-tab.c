@@ -89,6 +89,12 @@ project_tab_set_property (GObject      *object,
 static void
 child_setup (gpointer user_data)
 {
+#if 0
+  /* See note below, about why this isn't currently necessary - if we
+   * disabled the use of 'bash -l' and PTY forwarding, then we would
+   * need this.
+   */
+
   /* VTE's main child setup takes control of the terminal, but we want
    * to leave that for the shell we run via HostCommand so that job
    * control works properly in that shell, so we reverse that and give
@@ -104,13 +110,26 @@ child_setup (gpointer user_data)
   int fd = open("/dev/tty", O_RDWR | O_NOCTTY);
   ioctl (fd, TIOCNOTTY, 0);
   close (fd);
+#endif
 }
 
 static void
 project_tab_constructed (GObject *object)
 {
   ProjectTab *self = PROJECT_TAB (object);
-  const char *terminal_argv[] = { "/bin/bash", "-l", "-c", "exec pegg shell", NULL };
+
+  /* The use of bash here is to get the user's environment variables,
+   * even if the session isn't run under a login shell; (mostly a
+   * problem with older certain versions of GNOME+Wayland -see
+   * https://bugzilla.gnome.org/show_bug.cgi?id=736660.) This doesn't
+   * matter for the case where the interactive environment is a child
+   * of docker, only for the un-sandboxed case. Note that because this
+   * extra bash will take ownership of the TTY, we end up needing PTY
+   * forwarding just like we do when pegg is run directly from a
+   * terminal - without the invocation of bash here, we could let
+   * flatpak-session-helper take ownership of the PTY opened by VTE.
+   */
+  const char *terminal_argv[] = { "/bin/bash", "-l", "-c", "exec " BINDIR "/pegg shell", NULL };
   const char *terminal_envv[] = { "PURPLEEGG=1", NULL };
   GError *error = NULL;
 
