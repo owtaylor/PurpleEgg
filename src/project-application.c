@@ -69,14 +69,56 @@ project_application_set_property (GObject      *object,
           }
 }
 
+static GFile *
+get_project_directory (ProjectApplication *application)
+{
+  g_autoptr(GFile) homedir = g_file_new_for_path (g_get_home_dir ());
+  return g_file_get_child (homedir, "Projects");
+}
+
+char **
+project_application_get_all_projects (ProjectApplication *self,
+                                      GError            **error)
+{
+  GPtrArray *results = g_ptr_array_new();
+
+  g_autoptr(GFile) projects_file = get_project_directory (self);
+
+  g_autoptr(GFileEnumerator) enumerator = g_file_enumerate_children (projects_file,
+                                                                     "standard::name",
+                                                                     G_FILE_QUERY_INFO_NONE,
+                                                                     NULL, error);
+  while (TRUE)
+    {
+      g_autoptr(GFileInfo) info = g_file_enumerator_next_file (enumerator, NULL, error);
+      if (info == NULL)
+        {
+          if (*error)
+            goto fail;
+          break;
+        }
+
+      const char *name = g_file_info_get_name (info);
+      g_autoptr(GFile) child = g_file_get_child (projects_file, name);
+      g_ptr_array_add (results, g_file_get_path(child));
+    }
+
+  g_ptr_array_add (results, NULL);
+  return (char **)g_ptr_array_free (results, FALSE);
+
+ fail:
+  g_ptr_array_free (results, TRUE);
+  return NULL;
+}
+
 static char **
-get_matching_projects (ProjectApplication *application,
+get_matching_projects (ProjectApplication *self,
                        const char *const  *terms,
                        GError            **error)
 {
   GPtrArray *results = g_ptr_array_new();
 
-  g_autoptr(GFile) projects_file = g_file_new_for_path ("/home/otaylor/Projects");
+  g_autoptr(GFile) projects_file = get_project_directory (self);
 
   g_autoptr(GFileEnumerator) enumerator = g_file_enumerate_children (projects_file,
                                                                      "standard::name",
@@ -299,8 +341,15 @@ static void
 project_application_activate (GApplication *application)
 {
   ProjectApplication *self = PROJECT_APPLICATION (application);
-  create_or_activate_window (self, "/home/otaylor/Projects/angular-phonecat",
-                             GDK_CURRENT_TIME);
+
+  GList *l = gtk_application_get_windows (GTK_APPLICATION (self));
+  if (l && l->data)
+    gtk_window_present (l->data);
+  else
+    {
+      ProjectWindow *window = project_window_new (self, NULL);
+      gtk_window_present (GTK_WINDOW (window));
+    }
 }
 
 static void

@@ -3,6 +3,7 @@
 #include "host-command.h"
 #include "project-tab.h"
 #include "project-view.h"
+#include "project-greeter.h"
 #include "project-window.h"
 
 struct _ProjectWindow
@@ -85,6 +86,9 @@ project_window_constructed (GObject *object)
 {
   ProjectWindow *self = PROJECT_WINDOW (object);
 
+  if (self->directory == NULL)
+    project_window_show_greeter (self);
+
   G_OBJECT_CLASS (project_window_parent_class)->constructed (object);
 }
 
@@ -132,12 +136,6 @@ clear_children (ProjectWindow *self)
     gtk_widget_destroy (child);
 }
 
-ProjectApplication *
-project_window_get_application (ProjectWindow *window)
-{
-  return self->application;
-}
-
 void
 project_window_set_directory (ProjectWindow *self,
                               const char    *directory)
@@ -164,4 +162,25 @@ project_window_set_directory (ProjectWindow *self,
     {
       gtk_window_set_title (GTK_WINDOW (self), "PurpleEgg");
     }
+}
+
+void
+project_window_show_greeter (ProjectWindow *self)
+{
+  project_window_set_directory (self, NULL);
+  clear_children (self);
+
+  ProjectGreeter *greeter = project_greeter_new (self);
+
+  gtk_widget_show (GTK_WIDGET (greeter));
+  gtk_container_add (GTK_CONTAINER (self), GTK_WIDGET (greeter));
+  gtk_window_set_titlebar (GTK_WINDOW (self),
+                           project_greeter_get_titlebar (greeter));
+}
+
+void
+project_window_show_creator (ProjectWindow *self)
+{
+  project_window_set_directory (self, NULL);
+  clear_children (self);
 }

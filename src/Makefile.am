@@ -4,7 +4,7 @@ bin_PROGRAMS = PurpleEgg
 CLEANFILES =
 BUILT_SOURCES =
 
-project.gresource.c: project.gresource.xml project-view.ui
+project.gresource.c: project.gresource.xml project-greeter.ui project-view.ui
 	$(GLIB_COMPILE_RESOURCES) --sourcedir=$(srcdir) --target=$@ --generate=.c $<
 
 CLEANFILES += project.gresource.c
@@ -22,6 +22,8 @@ PurpleEgg_SOURCES = \
 	main.c \
 	project-application.c \
 	project-application.h \
+	project-greeter.c \
+	project-greeter.h \
 	project-tab.c \
 	project-tab.h \
 	project-view.c \
