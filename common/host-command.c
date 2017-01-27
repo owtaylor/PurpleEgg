@@ -342,7 +342,7 @@ pegg_call_host_command (GDBusConnection          *connection,
     g_variant_builder_add (env_builder, "{ss}", "TERM", term);
 
   g_autoptr(GVariant) params = g_variant_new ("(^ay^aay@a{uh}@a{ss}u)",
-                                              g_get_home_dir (),
+                                              g_get_current_dir (),
                                               args,
                                               g_variant_builder_end (g_steal_pointer (&fd_builder)),
                                               g_variant_builder_end (g_steal_pointer (&env_builder)),
