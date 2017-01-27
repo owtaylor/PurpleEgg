@@ -1,6 +1,7 @@
 #include <glib-unix.h>
 #include <gio/gio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/wait.h>
 
 #include "host-command.h"
@@ -10,6 +11,8 @@ on_host_command_exited (int      pid,
                         int      exit_status,
                         gpointer data)
 {
+  pegg_restore_stdin ();
+
   if (WIFEXITED (exit_status))
     exit (WEXITSTATUS (exit_status));
   else if (WIFSIGNALED (exit_status))
@@ -64,6 +67,7 @@ int
 main(int argc, char **argv)
 {
   GError *error = NULL;
+  PeggHostCommandFlags flags = PEGG_HOST_COMMAND_NONE;
 
   if (!pegg_in_flatpak ())
     {
@@ -78,18 +82,30 @@ main(int argc, char **argv)
       return 1;
     }
 
+  int first_arg = 1;
+  if (argc > 1 && strcmp (argv[1], "--pty") == 0)
+    {
+      first_arg++;
+      flags |= PEGG_HOST_COMMAND_USE_PTY;
+    }
+
   GPtrArray *arg_array = g_ptr_array_new();
-  for (int i = 1; i < argc; i++)
+  for (int i = first_arg; i < argc; i++)
     g_ptr_array_add (arg_array, g_strdup (argv[i]));
   g_ptr_array_add (arg_array, NULL);
   char **args = (char **)g_ptr_array_free (arg_array, FALSE);
 
-  int pid = pegg_call_host_command (connection, args, on_host_command_exited, NULL, NULL, &error);
+  int pid = pegg_call_host_command (connection, args,
+                                    flags,
+                                    on_host_command_exited, NULL, NULL, &error);
   if (pid == -1)
     {
       g_printerr ("Could not call command: %s\n", error->message);
       return 1;
   }
+
+  if (flags & PEGG_HOST_COMMAND_USE_PTY)
+    pegg_make_stdin_raw ();
 
   watch_signal (connection, pid, SIGHUP, TRUE);
   watch_signal (connection, pid, SIGINT, TRUE);

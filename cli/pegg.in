@@ -166,15 +166,23 @@ xdg_runtime_dir = os.environ.get('XDG_RUNTIME_DIR',
                                               '.cache'))
 in_flatpak = os.path.exists (os.path.join(xdg_runtime_dir, "flatpak-info"))
 
-def check_call(args):
+def check_call(args, pty=False):
+    final_args = []
     if in_flatpak:
-        args = ["@LIBEXEC@/pegg-run-host"] + args
-    return subprocess.check_call(args)
+        final_args += ["@LIBEXEC@/pegg-run-host"]
+        if pty:
+            final_args += ["--pty"]
+    final_args += args
+    return subprocess.check_call(final_args)
 
-def check_output(args):
+def check_output(args, pty=False):
+    final_args = []
     if in_flatpak:
-        args = ["@LIBEXEC@/pegg-run-host"] + args
-    return subprocess.check_output(args)
+        final_args = ["@LIBEXEC@/pegg-run-host"]
+        if pty:
+            final_args += ["--pty"]
+    final_args =+ args
+    return subprocess.check_output(final_args)
 
 def maybe_write_file(path, contents):
     old=None
@@ -357,7 +365,7 @@ class ContainerEnvironment(Environment):
             os.waitpid(pid, 0)
         else:
             os.close(w)
-            os.execvp('@LIBEXEC@/pegg-docker-launch', ['pegg-docker-launch', str(r)] + args)
+            os.execvp('@LIBEXEC@/pegg-docker-launch', ['pegg-docker-launch', "--pty", str(r)] + args)
 
 class PlainEnvironment(Environment):
     def __init__(self):
@@ -376,7 +384,7 @@ class PlainEnvironment(Environment):
 
     def shell(self, as_root=False):
         if in_flatpak:
-            os.execvp("@LIBEXEC@/pegg-run-host", ["pegg-run-host", "bash", "-l", "-c", "exec $0 $@", "bash", "--rcfile", ".pegg/bashrc"])
+            os.execvp("@LIBEXEC@/pegg-run-host", ["pegg-run-host", "--pty", "bash", "-l", "-c", "exec $0 $@", "bash", "--rcfile", ".pegg/bashrc"])
         else:
             os.execvp("bash", ["bash", "-l", "-c", "exec $0 $@", "bash", "--rcfile", ".pegg/bashrc"])
 

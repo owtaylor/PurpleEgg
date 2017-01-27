@@ -52,6 +52,8 @@ on_input (GObject      *source_object,
 static void
 cleanup (void)
 {
+  pegg_restore_stdin ();
+
   if (tmpdir != NULL)
     {
       unlink (g_build_filename (tmpdir, "cid", NULL));
@@ -63,18 +65,27 @@ int
 main(int argc, char **argv)
 {
   GError *error = NULL;
+  gboolean use_pty = FALSE;
 
   signal (SIGHUP, SIG_IGN);
   signal (SIGINT, SIG_IGN);
   signal (SIGTERM, SIG_IGN);
 
-  if (argc < 2)
+  int first_arg = 1;
+
+  if (argc > 1 && strcmp (argv[1], "--pty") == 0)
+    {
+      first_arg++;
+      use_pty = TRUE;
+    }
+
+  if (argc < first_arg + 1)
     {
       g_printerr ("First argument must be the file descriptor to wait on\n");
       goto fail;
     }
 
-  int wait_fd = atoi(argv[1]);
+  int wait_fd = atoi(argv[first_arg]);
   GInputStream *input = g_unix_input_stream_new (wait_fd, TRUE);
   g_input_stream_read_async (input, buffer, 1, G_PRIORITY_DEFAULT, NULL, on_input, NULL);
 
@@ -115,7 +126,7 @@ main(int argc, char **argv)
   g_ptr_array_add(arg_array, "run");
   g_ptr_array_add(arg_array, g_strconcat("--cidfile=", cidfile, NULL));
 
-  for (int i = 2; i < argc; i++)
+  for (int i = first_arg + 1; i < argc; i++)
     g_ptr_array_add(arg_array, argv[i]);
 
   g_ptr_array_add (arg_array, NULL);
@@ -124,9 +135,14 @@ main(int argc, char **argv)
   GDBusConnection *connection = NULL;
   if (pegg_in_flatpak ())
     {
+      if (use_pty)
+        pegg_make_stdin_raw ();
+
       connection = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, &error);
+
       int pid = pegg_call_host_command (connection,
                                         subprocess_args,
+                                        use_pty ? PEGG_HOST_COMMAND_USE_PTY : PEGG_HOST_COMMAND_NONE,
                                         on_host_command_exited,
                                         NULL, NULL, &error);
       if (pid == -1)
@@ -166,6 +182,7 @@ main(int argc, char **argv)
     {
       int pid = pegg_call_host_command (connection,
                                         (char **)rm_args,
+                                        PEGG_HOST_COMMAND_STDOUT_TO_DEV_NULL,
                                         on_host_command_exited,
                                         NULL, NULL, &error);
       if (pid == -1)
