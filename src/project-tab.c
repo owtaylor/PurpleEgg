@@ -206,7 +206,8 @@ on_child_exited (VteTerminal   *vte,
                  int            status,
                  ProjectTab    *self)
 {
-  gtk_widget_destroy (GTK_WIDGET (self));
+  if (status == 0)
+    gtk_widget_destroy (GTK_WIDGET (self));
 }
 
 static void
