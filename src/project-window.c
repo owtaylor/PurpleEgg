@@ -1,5 +1,6 @@
 #include <string.h>
 
+#include "host-command.h"
 #include "project-tab.h"
 #include "project-window.h"
 
@@ -226,14 +227,24 @@ on_git_combo_changed (GtkComboBox   *combo,
       g_autofree char *git_dir = g_build_filename (self->directory, ".git", NULL);
       g_autofree char *git_dir_arg = g_strconcat ("--git-dir=", git_dir, NULL);
       GError *error = NULL;
-      g_autoptr(GSubprocess) subprocess = g_subprocess_new (G_SUBPROCESS_FLAGS_STDOUT_PIPE |
+      GPtrArray *arg_array = g_ptr_array_new ();
+      /* It would be cleaner to use pegg_run_host() directly rather than
+       * starting an intermediate binary; if we do this repeatedly, we should
+       * have a helper that uses GSubprocess or pegg_run_host() behind the
+       * scenes depending on whether we are within flatpak.
+       */
+      if (pegg_in_flatpak ())
+        g_ptr_array_add (arg_array, g_strdup (LIBEXECDIR "/pegg-run-host"));
+      g_ptr_array_add (arg_array, g_strdup ("git"));
+      g_ptr_array_add (arg_array, g_strdup (git_dir_arg));
+      g_ptr_array_add (arg_array, g_strdup ("checkout"));
+      g_ptr_array_add (arg_array, g_strdup (branch));
+      g_ptr_array_add (arg_array, NULL);
+      g_auto(GStrv) args = (char **)g_ptr_array_free (arg_array, FALSE);
+      g_autoptr(GSubprocess) subprocess = g_subprocess_newv ((const char * const *)args,
+                                                             G_SUBPROCESS_FLAGS_STDOUT_PIPE |
                                                              G_SUBPROCESS_FLAGS_STDERR_PIPE,
-                                                            &error,
-                                                             "git",
-                                                             git_dir_arg,
-                                                             "checkout",
-                                                             branch,
-                                                             NULL);
+                                                             &error);
       if (!subprocess)
         {
           g_printerr ("Failed to exec git checkout%s\n", error->message);
