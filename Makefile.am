@@ -1,4 +1,5 @@
 SUBDIRS = \
+	common \
 	cli \
 	data \
 	po \

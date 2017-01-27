@@ -29,5 +29,6 @@ PurpleEgg_SOURCES = \
 	project.gresource.c \
 	search-generated.c \
 	search-generated.h
-PurpleEgg_CPPFLAGS = $(PURPLEEGG_CFLAGS) $(WARN_CFLAGS) -DBINDIR=\"$(bindir)\" -DLIBEXECDIR=\"$(libexecdir)\"
+PurpleEgg_CPPFLAGS = $(PURPLEEGG_CFLAGS) $(WARN_CFLAGS) -I$(top_srcdir)/common -DBINDIR=\"$(bindir)\" -DLIBEXECDIR=\"$(libexecdir)\"
 PurpleEgg_LDFLAGS = $(PURPLEEGG_LIBS)
+PurpleEgg_LDADD = $(top_builddir)/common/libPurpleEgg-common.la

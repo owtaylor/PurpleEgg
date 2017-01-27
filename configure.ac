@@ -105,6 +105,7 @@ dnl Process .in Files
 dnl ***********************************************************************
 AC_CONFIG_FILES([
 	Makefile
+	common/Makefile
 	cli/Makefile
 	data/Makefile
 	po/Makefile.in
