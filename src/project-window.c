@@ -30,8 +30,8 @@ project_window_new (ProjectApplication *application,
   return g_object_new (PROJECT_TYPE_WINDOW,
                        "application", application,
                        "directory", directory,
-                       "default_width", 600,
-                       "default_height", 400,
+                       "default_width", 700,
+                       "default_height", 500,
                        NULL);
 }
 
@@ -157,6 +157,8 @@ project_window_set_directory (ProjectWindow *self,
       gtk_container_add (GTK_CONTAINER (self), GTK_WIDGET (view));
       gtk_window_set_titlebar (GTK_WINDOW (self),
                                project_view_get_titlebar (view));
+
+      project_view_update_window_size (view);
     }
   else
     {

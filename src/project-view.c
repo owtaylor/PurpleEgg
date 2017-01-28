@@ -24,7 +24,6 @@ struct _ProjectView
 G_DEFINE_TYPE (ProjectView, project_view, GTK_TYPE_BIN)
 
 static void new_tab (ProjectView *self);
-static void update_window_size (ProjectView *self);
 static void add_window_actions (ProjectView *self);
 
 enum {
@@ -276,7 +275,6 @@ project_view_constructed (GObject *object)
   gtk_label_set_markup (self->title, title);
 
   new_tab (self);
-  update_window_size (self);
 
   GError *error = NULL;
 
@@ -499,8 +497,8 @@ paste_cb (GSimpleAction *action,
     project_tab_paste (PROJECT_TAB (current_tab));
 }
 
-static void
-update_window_size (ProjectView *self)
+void
+project_view_update_window_size (ProjectView *self)
 {
   GList *children = gtk_container_get_children (GTK_CONTAINER (self->stack));
   if (children)
@@ -523,7 +521,7 @@ update_font_sizes (ProjectView *self)
   for (GList *l = children; l; l = l->next)
       project_tab_set_font_scale (l->data, self->font_scale);
 
-  update_window_size (self);
+  project_view_update_window_size (self);
 
   g_list_free (children);
 

@@ -15,6 +15,8 @@ ProjectView *project_view_new (ProjectWindow *window,
 const char *project_view_get_directory (ProjectView *view);
 GtkWidget * project_view_get_titlebar  (ProjectView *self);
 
+void project_view_update_window_size (ProjectView *self);
+
 G_END_DECLS
 
 #endif /* PROJECT_VIEW_H */
