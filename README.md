@@ -7,10 +7,13 @@ PurpleEgg is an experiment in taking terminal-centric development to the next le
 
 Installing via flatpak
 ======================
+If you have flatpak 0.6.13 or later installed on your system, run:
+
+ flatpak install https://people.gnome.org/~otaylor/PurpleEgg.flatpakref
 
 Authorizing Docker Commands
 ===========================
-PurpleEgg needs the ability to run docker commands on your behalf. Currently, for PurpleEgg to work propery, your user must be added to the docker group. You should realize that if your user is added to the docker group, then you and malicious attacker with access to your user account will be able to execute commands as root with no further authorization. In most development scenarios, uncontrolled access to the user account is as serious as uncontrolled root access, but hopefully we will be able to find a better solution to this issue in the future.
+PurpleEgg needs the ability to run docker commands on your behalf. Currently, for PurpleEgg to work properly, your user must be added to the docker group. You should realize that if your user is added to the docker group, then you and malicious attacker with access to your user account will be able to execute commands as root with no further authorization. In most development scenarios, uncontrolled access to the user account is as serious as uncontrolled root access, but hopefully we will be able to find a better solution to this issue in the future.
 
 Command line usage
 ==================
