@@ -181,7 +181,7 @@ def check_output(args, pty=False):
         final_args = ["@LIBEXEC@/pegg-run-host"]
         if pty:
             final_args += ["--pty"]
-    final_args =+ args
+    final_args += args
     return subprocess.check_output(final_args)
 
 def maybe_write_file(path, contents):
