@@ -116,6 +116,7 @@ project_window_class_init (ProjectWindowClass *klass)
 static void
 project_window_init (ProjectWindow *self)
 {
+  gtk_window_set_title (GTK_WINDOW (self), "PurpleEgg");
 }
 
 const char *
@@ -125,15 +126,23 @@ project_window_get_directory (ProjectWindow *self)
 }
 
 static void
-clear_children (ProjectWindow *self)
+set_child_and_titlebar (ProjectWindow *self,
+                        GtkWidget     *child,
+                        GtkWidget     *titlebar)
 {
-  GtkWidget *titlebar = gtk_window_get_titlebar (GTK_WINDOW (self));
-  if (titlebar)
-    gtk_widget_destroy (titlebar);
+  g_autoptr(GtkWidget) old_child = g_object_ref (gtk_bin_get_child (GTK_BIN (self)));
+  g_autoptr(GtkWidget) old_titlebar = g_object_ref (gtk_window_get_titlebar (GTK_WINDOW (self)));
 
-  GtkWidget *child = gtk_bin_get_child (GTK_BIN (self));
-  if (child)
-    gtk_widget_destroy (child);
+  if (old_child)
+    gtk_container_remove (GTK_CONTAINER (self), GTK_WIDGET (old_child));
+  gtk_container_add (GTK_CONTAINER (self), child);
+
+  gtk_window_set_titlebar (GTK_WINDOW (self), titlebar);
+
+  if (old_child)
+    gtk_widget_destroy (old_child);
+  if (old_titlebar)
+    gtk_widget_destroy (old_titlebar);
 }
 
 void
@@ -143,8 +152,9 @@ project_window_set_directory (ProjectWindow *self,
   if (g_strcmp0 (self->directory, directory) == 0)
     return;
 
-  clear_children (self);
+  g_return_if_fail (self->directory == NULL);
 
+  g_free (self->directory);
   self->directory = g_strdup (directory);
 
   if (self->directory)
