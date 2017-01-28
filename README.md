@@ -9,7 +9,7 @@ Installing via flatpak
 ======================
 If you have flatpak 0.6.13 or later installed on your system, run:
 
- flatpak install https://people.gnome.org/~otaylor/PurpleEgg.flatpakref
+    flatpak install https://people.gnome.org/~otaylor/PurpleEgg.flatpakref
 
 Authorizing Docker Commands
 ===========================
