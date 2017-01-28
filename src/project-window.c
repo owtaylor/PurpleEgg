@@ -3,6 +3,7 @@
 #include "host-command.h"
 #include "project-tab.h"
 #include "project-view.h"
+#include "project-creator.h"
 #include "project-greeter.h"
 #include "project-window.h"
 
@@ -164,35 +165,39 @@ project_window_set_directory (ProjectWindow *self,
 
       ProjectView *view = project_view_new (self, directory);
       gtk_widget_show (GTK_WIDGET (view));
-      gtk_container_add (GTK_CONTAINER (self), GTK_WIDGET (view));
-      gtk_window_set_titlebar (GTK_WINDOW (self),
-                               project_view_get_titlebar (view));
+
+      set_child_and_titlebar (self,
+                              GTK_WIDGET (view),
+                              project_view_get_titlebar (view));
 
       project_view_update_window_size (view);
-    }
-  else
-    {
-      gtk_window_set_title (GTK_WINDOW (self), "PurpleEgg");
     }
 }
 
 void
 project_window_show_greeter (ProjectWindow *self)
 {
-  project_window_set_directory (self, NULL);
-  clear_children (self);
+  g_return_if_fail (self->directory == NULL);
 
   ProjectGreeter *greeter = project_greeter_new (self);
-
   gtk_widget_show (GTK_WIDGET (greeter));
-  gtk_container_add (GTK_CONTAINER (self), GTK_WIDGET (greeter));
-  gtk_window_set_titlebar (GTK_WINDOW (self),
-                           project_greeter_get_titlebar (greeter));
+
+  set_child_and_titlebar (self,
+                          GTK_WIDGET (greeter),
+                          project_greeter_get_titlebar (greeter));
 }
 
 void
 project_window_show_creator (ProjectWindow *self)
 {
+  g_return_if_fail (self->directory == NULL);
+
   project_window_set_directory (self, NULL);
-  clear_children (self);
+
+  ProjectCreator *creator = project_creator_new (self);
+  gtk_widget_show (GTK_WIDGET (creator));
+
+  set_child_and_titlebar (self,
+                          GTK_WIDGET (creator),
+                          project_creator_get_titlebar (creator));
 }
